@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Symmetry</title>
+		<style>
+			body { margin: 0; overflow: hidden; background-color: black;}
+			canvas { width: 100%; height: 100% }
+
+			#brandTag
+			{
+				position: fixed;
+				display: block;
+				top: 0px;
+				left: 30px;
+				color: white;
+				background-color: rgba(50, 50, 50, 0.5);
+				z-index: 1000;
+				text-align: center;
+				padding: 12px 12px 12px 12px;
+				font-size: 18px;
+				font-family: "Helvetica", sans-serif;
+				transition-property: color, background-color, padding;
+				transition-duration: 0.3s;
+			}
+
+			#brandTag:hover 
+			{
+				color: black;
+				background-color: white;
+				padding: 24px 12px 12px 12px;
+			}
+		</style>
+	</head>
+	<body>
+		
+		<a href="http://www.colordodge.com">
+			<div id="brandTag">Colordodge</div>
+		</a>
+		<script type="text/javascript">
+			document.onkeydown = function(e) 
+			{
+			    e = e || window.event;
+
+			    if (e.keyCode == '72') 
+			    {
+			    	var brandTag = document.getElementById("brandTag");
+			    	if (brandTag.style.visibility == "hidden") {
+			    		brandTag.style.visibility = "visible";
+			    	} else {
+			    		brandTag.style.visibility = "hidden";
+			    	}
+			    }
+			}
+		</script>
+		
+
+		<script src="js/three.min.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/dat.gui.min.js"></script>
+		<script src="script.js"></script>
+
+		
+	</body>
+</html>
