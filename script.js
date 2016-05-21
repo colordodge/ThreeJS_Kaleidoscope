@@ -6,7 +6,7 @@ stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 // document.body.appendChild( stats.dom );
 
 
-var bufferSize = 2048;
+var bufferSize = 1024;
 var bufferWidth = bufferSize;
 var bufferHeight = bufferSize;
 
@@ -14,7 +14,7 @@ var bufferHeight = bufferSize;
 var scene = new THREE.Scene();
 
 var bufferCamera = new THREE.PerspectiveCamera(75, bufferWidth / bufferHeight, 0.1, 1000);
-bufferCamera.position.z = 2;
+bufferCamera.position.z = 2.2;
 var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 );
 camera.position.z = 5;
 
@@ -31,8 +31,8 @@ var controls2 = new THREE.OrbitControls(camera, renderer.domElement);
 controls2.enableZoom = true;
 controls2.enableRotate = false;
 controls2.zoomSpeed = 0.3;
-controls2.minZoom = 0.1
-controls2.maxZoom = 10;
+controls2.minZoom = 0.2;
+controls2.maxZoom = 2;
 controls2.enablePan = false;
 
 
@@ -44,8 +44,23 @@ var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { mi
 
 var numAxes = 12;
 
+var torus = {radius:1, tubeSize:0.5, tubularSegments:50, radialSegments:30, p:4, q:16};
+
+var torusGeo;
+var tubeSize = 0.5;
+
+function updateTorusGeo() {
+	torusGeo = new THREE.TorusKnotGeometry( torus.radius, torus.tubeSize, torus.tubularSegments, torus.radialSegments, torus.p, torus.q );
+}
+
+updateTorusGeo();
+
+
 // var geometry = new THREE.IcosahedronGeometry(3, 2);
-var geometry = new THREE.TorusKnotGeometry( 1, 0.5, 50, 20, 4, 16 );
+// var geometry = new THREE.TorusKnotGeometry( 1, 0.5, 50, 30, 4, 16 );
+
+
+
 var material = new THREE.MeshPhongMaterial({color:0x993300, specular:0xffff00, shading:THREE.FlatShading, side:THREE.DoubleSide});
 material.color.setHSL(1.0,0.5,0.5);
 material.specular.setHSL(0.5,1.0,0.1);
@@ -60,13 +75,14 @@ material2.shininess = 30;
 var hue2 = Math.random();
 var specHue2 = Math.random();
 
-var cube = new THREE.Mesh(geometry, material2);
+
+var cube = new THREE.Mesh(torusGeo, material2);
 cube.rotation.x = Math.random();
 cube.rotation.y = Math.random();
 cube.rotation.z = Math.random();
 bufferScene.add(cube);
 
-var cube2 = new THREE.Mesh(geometry, material);
+var cube2 = new THREE.Mesh(torusGeo, material);
 cube2.rotation.x = Math.random();
 cube2.rotation.y = Math.random();
 cube2.rotation.z = Math.random();
@@ -76,8 +92,12 @@ bufferScene.add(cube2);
 var ambientLight = new THREE.AmbientLight(0x404040);
 bufferScene.add(ambientLight);
 
-var pointLight = new THREE.PointLight(0xffffff);
-pointLight.position.set(0,50,100);
+var pointLight = new THREE.PointLight(0xaaaaaa);
+pointLight.position.set(0,50,200);
+bufferScene.add(pointLight);
+
+var pointLight = new THREE.PointLight(0x404040);
+pointLight.position.set(0,50,-200);
 bufferScene.add(pointLight);
 
 
@@ -89,7 +109,6 @@ scene.add(ambientLight);
 var pointLight3 = new THREE.PointLight(0xffffff);
 pointLight3.position.set(-100,200,100);
 scene.add(pointLight3);
-
 
 
 
@@ -114,7 +133,7 @@ function updateGridGeometry()
 	var tileGeometry = new THREE.Geometry();
 	tileGeometry.vertices.push(new THREE.Vector3(0,0,0));
 
-	var snapStep;
+	var snapStep; // number of steps between simplified shape vertices
 	var stepAngle;
 	var rotOffset;
 
@@ -205,22 +224,27 @@ function updateGridGeometry()
 	// set UV mapping
 	tileGeometry.faceVertexUvs[0] = [];
 
+	var mapWidth = 1/snapStep;
+	var diff = 1 - mapWidth;
+	var mapLeft = diff/2;
+	var mapRight = 1 - diff/2;
+
 	for (i = 0; i < tileGeometry.faces.length ; i++) 
 	{
 		if (i%2)
 		{
 			tileGeometry.faceVertexUvs[0].push([
 				new THREE.Vector2( 0.5,  0),
-				new THREE.Vector2( 0, 1),
-				new THREE.Vector2(  1, 1)
+				new THREE.Vector2( mapLeft, 1),
+				new THREE.Vector2(  mapRight, 1)
 			]);
 		}
 		else
 		{
 			tileGeometry.faceVertexUvs[0].push([
 				new THREE.Vector2( 0.5,  0),
-				new THREE.Vector2( 1, 1),
-				new THREE.Vector2(  0, 1)
+				new THREE.Vector2( mapRight, 1),
+				new THREE.Vector2(  mapLeft, 1)
 			]);
 		}	
 	}
@@ -231,7 +255,7 @@ function updateGridGeometry()
 	var tileRow = new THREE.Object3D();
 	tileHolder.add(tileRow);
 
-	var scale = bufferSize/4;
+	var scale = bufferSize/3;
 
 	var tileMesh = new THREE.Mesh(tileGeometry, tileMat);
 	tileMesh.scale.set( scale, scale, 1 );
@@ -272,21 +296,75 @@ function updateGridGeometry()
 updateGridGeometry();
 
 
+// test plane
+var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
+var planeGeo = new THREE.PlaneGeometry(bufferWidth/2, bufferHeight/2);
+var planeObj = new THREE.Mesh(planeGeo, planeMat);
+scene.add(planeObj);
+planeObj.visible = false;
+
+
 // GUI
+
+var showTexture = false;
+var speed = 0.5;
 
 var gui = new dat.GUI();
 var numAxesControl = gui.add(this, "numAxes", [4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36]);
+var textureControl = gui.add(this, "showTexture");
+gui.add(this, "speed", 0, 2);
+
+// var torus = {radius:1, tubeSize:0.5, tubularSegments:50, radialSegments:30, p:4, q:16};
+
+var torusControl = gui.addFolder("Torus Control");
+torusControl.add(bufferCamera.position, "z", 0, 50);
+var radiusControl = torusControl.add(torus, "radius", 1, 20);
+var tubeSizeControl = torusControl.add(torus, "tubeSize", 0.1, 10);
+var tubularSegmentControl = torusControl.add(torus, "tubularSegments", 3, 100).step(1);
+var radialSegmentControl = torusControl.add(torus, "radialSegments", 3, 50).step(1);
+var pControl = torusControl.add(torus, "p", 1, 20).step(1);
+var qControl = torusControl.add(torus, "q", 1, 20).step(1);
+torusControl.open();
 
 numAxesControl.onChange(function(value){
-	console.log("numAxes changed");
 	updateGridGeometry();
 });
 
-// test plane
-// var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
-// var planeGeo = new THREE.PlaneGeometry(bufferWidth, bufferHeight);
-// var planeObj = new THREE.Mesh(planeGeo, planeMat);
-// scene.add(planeObj);
+textureControl.onChange(function(value){
+	planeObj.visible = showTexture;
+});
+
+radiusControl.onChange(function(value){
+	updateTorus();
+});
+
+tubeSizeControl.onChange(function(value){
+	updateTorus();
+});
+
+tubularSegmentControl.onChange(function(value){
+	updateTorus();
+});
+
+radialSegmentControl.onChange(function(value){
+	updateTorus();
+});
+
+pControl.onChange(function(value){
+	updateTorus();
+});
+
+qControl.onChange(function(value){
+	updateTorus();
+});
+
+function updateTorus()
+{
+	updateTorusGeo();
+	cube.geometry = torusGeo;
+	cube2.geometry = torusGeo;
+}
+
 
 
 function render()
@@ -308,8 +386,6 @@ render();
 function update()
 {
 	controls.update();
-
-	var speed = -0.2;
 
 	cube.rotation.x += 0.0045 * speed;
 	cube.rotation.y += 0.0021 * speed;
@@ -334,4 +410,5 @@ function update()
 	specHue2 += 0.0001;
 	if (specHue2 > 1.0) specHue2 = 0.0;
 	material2.specular.setHSL(specHue2, 1.0, 0.5);
+
 }
