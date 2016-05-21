@@ -1,5 +1,11 @@
 
-var bufferSize = 1024;
+
+var stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+// document.body.appendChild( stats.dom );
+
+
+var bufferSize = 2048;
 var bufferWidth = bufferSize;
 var bufferHeight = bufferSize;
 
@@ -11,7 +17,7 @@ bufferCamera.position.z = 2;
 var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 );
 camera.position.z = 5;
 
-var renderer = new THREE.WebGLRenderer({ antialias: false });
+var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -24,13 +30,13 @@ var controls2 = new THREE.OrbitControls(camera, renderer.domElement);
 controls2.enableZoom = true;
 controls2.enableRotate = false;
 controls2.zoomSpeed = 0.3;
-controls2.minZoom = 0.2
-controls2.maxZoom = 2;
+controls2.minZoom = 0.1
+controls2.maxZoom = 10;
 controls2.enablePan = false;
 
 
 var bufferScene = new THREE.Scene();
-var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, antialias: false});
+var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { minFilter: THREE.LinearMipMapLinearFilter, magFilter: THREE.LinearFilter, antialias: true});
 
 
 /// buffer scene objects
@@ -83,11 +89,7 @@ var pointLight3 = new THREE.PointLight(0xffffff);
 pointLight3.position.set(-100,200,100);
 scene.add(pointLight3);
 
-// test plane
-// var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
-// var planeGeo = new THREE.PlaneGeometry(window.innerWidth, window.innerHeight);
-// var planeObj = new THREE.Mesh(planeGeo, planeMat);
-// scene.add(planeObj);
+
 
 
 // main object
@@ -228,14 +230,14 @@ function updateGridGeometry()
 	var tileRow = new THREE.Object3D();
 	tileHolder.add(tileRow);
 
-	var scale = bufferSize;
+	var scale = bufferSize/4;
 
 	var tileMesh = new THREE.Mesh(tileGeometry, tileMat);
 	tileMesh.scale.set( scale, scale, 1 );
 	tileMesh.rotation.z = rotOffset;
 	tileRow.add(tileMesh);
 
-	var tileCountX = 3;
+	var tileCountX = 15;
 	for (var i=0; i<tileCountX; i++)
 	{
 		var tileMeshLeft = tileMesh.clone();
@@ -247,18 +249,18 @@ function updateGridGeometry()
 		tileRow.add(tileMeshRight);
 	}
 
-	var tileCountY = 2;
+	var tileCountY = 10;
 	for (var i=0; i<tileCountY; i++)
 	{
 		var tileRowTop = tileRow.clone();
 		tileRowTop.position.y += tileHeight * scale * (i+1);
 		if (!(i%2)) tileRowTop.position.x += tileRowOffset * scale;
-		tileRow.add(tileRowTop);
+		tileHolder.add(tileRowTop);
 
 		var tileRowBottom = tileRow.clone();
 		tileRowBottom.position.y -= tileHeight * scale * (i+1);
 		if (!(i%2)) tileRowBottom.position.x += tileRowOffset * scale;
-		tileRow.add(tileRowBottom);
+		tileHolder.add(tileRowBottom);
 	}
 
 
@@ -279,14 +281,26 @@ numAxesControl.onChange(function(value){
 	updateGridGeometry();
 });
 
+// test plane
+// var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
+// var planeGeo = new THREE.PlaneGeometry(bufferWidth, bufferHeight);
+// var planeObj = new THREE.Mesh(planeGeo, planeMat);
+// scene.add(planeObj);
+
 
 function render()
 {
-	requestAnimationFrame(render);
+	stats.begin();
+
+	
 	update();
 	
 	renderer.render(bufferScene, bufferCamera, bufferTexture);
 	renderer.render(scene, camera);
+
+	stats.end();
+
+	requestAnimationFrame(render);
 }
 render();
 
