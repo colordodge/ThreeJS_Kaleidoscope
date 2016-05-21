@@ -1,11 +1,11 @@
 
 
-// var stats = new Stats();
-// stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+var stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 // document.body.appendChild( stats.dom );
 
 
-var bufferSize = 1024;
+var bufferSize = 2048;
 var bufferWidth = bufferSize;
 var bufferHeight = bufferSize;
 
@@ -30,8 +30,8 @@ var controls2 = new THREE.OrbitControls(camera, renderer.domElement);
 controls2.enableZoom = true;
 controls2.enableRotate = false;
 controls2.zoomSpeed = 0.3;
-controls2.minZoom = 0.2
-controls2.maxZoom = 2;
+controls2.minZoom = 0.1
+controls2.maxZoom = 10;
 controls2.enablePan = false;
 
 
@@ -230,14 +230,14 @@ function updateGridGeometry()
 	var tileRow = new THREE.Object3D();
 	tileHolder.add(tileRow);
 
-	var scale = bufferSize;
+	var scale = bufferSize/4;
 
 	var tileMesh = new THREE.Mesh(tileGeometry, tileMat);
 	tileMesh.scale.set( scale, scale, 1 );
 	tileMesh.rotation.z = rotOffset;
 	tileRow.add(tileMesh);
 
-	var tileCountX = 4;
+	var tileCountX = 15;
 	for (var i=0; i<tileCountX; i++)
 	{
 		var tileMeshLeft = tileMesh.clone();
@@ -249,7 +249,7 @@ function updateGridGeometry()
 		tileRow.add(tileMeshRight);
 	}
 
-	var tileCountY = 3;
+	var tileCountY = 10;
 	for (var i=0; i<tileCountY; i++)
 	{
 		var tileRowTop = tileRow.clone();
@@ -290,7 +290,7 @@ numAxesControl.onChange(function(value){
 
 function render()
 {
-	// stats.begin();
+	stats.begin();
 
 	
 	update();
@@ -298,7 +298,7 @@ function render()
 	renderer.render(bufferScene, bufferCamera, bufferTexture);
 	renderer.render(scene, camera);
 
-	// stats.end();
+	stats.end();
 
 	requestAnimationFrame(render);
 }
