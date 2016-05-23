@@ -44,11 +44,15 @@ var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { mi
 
 var numAxes = 12;
 
-var shape1 = new TorusKnotShape();
-bufferScene.add(shape1.mesh);
+var allShapes = [];
+var numShapes = 2;
 
-var shape2 = new TorusKnotShape();
-bufferScene.add(shape2.mesh);
+for (var i=0; i<numShapes; i++)
+{
+	var shape = new TorusKnotShape();
+	bufferScene.add(shape.mesh);
+	allShapes[i] = shape;
+}
 
 
 var ambientLight = new THREE.AmbientLight(0x404040);
@@ -269,14 +273,20 @@ planeObj.visible = false;
 // GUI
 
 var showTexture = false;
-var speed = 0.5;
+var speed = 1.0;
 
 var gui = new dat.GUI();
 var numAxesControl = gui.add(this, "numAxes", [4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36]);
 var textureControl = gui.add(this, "showTexture");
 gui.add(this, "speed", 0, 2);
 
+numAxesControl.onChange(function(value){
+	updateGridGeometry();
+});
 
+textureControl.onChange(function(value){
+	planeObj.visible = showTexture;
+});
 
 
 function render()
@@ -299,7 +309,8 @@ function update()
 {
 	controls.update();
 
-	shape1.update();
-	shape2.update();
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].update();
+	}
 
 }
