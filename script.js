@@ -14,7 +14,7 @@ var bufferHeight = bufferSize;
 var scene = new THREE.Scene();
 
 var bufferCamera = new THREE.PerspectiveCamera(75, bufferWidth / bufferHeight, 0.1, 1000);
-bufferCamera.position.z = 2.2;
+bufferCamera.position.z = 2.3;
 var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 );
 camera.position.z = 5;
 
@@ -44,49 +44,11 @@ var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { mi
 
 var numAxes = 12;
 
-var torus = {radius:1, tubeSize:0.5, tubularSegments:50, radialSegments:30, p:4, q:16};
+var shape1 = new TorusKnotShape();
+bufferScene.add(shape1.mesh);
 
-var torusGeo;
-var tubeSize = 0.5;
-
-function updateTorusGeo() {
-	torusGeo = new THREE.TorusKnotGeometry( torus.radius, torus.tubeSize, torus.tubularSegments, torus.radialSegments, torus.p, torus.q );
-}
-
-updateTorusGeo();
-
-
-// var geometry = new THREE.IcosahedronGeometry(3, 2);
-// var geometry = new THREE.TorusKnotGeometry( 1, 0.5, 50, 30, 4, 16 );
-
-
-
-var material = new THREE.MeshPhongMaterial({color:0x993300, specular:0xffff00, shading:THREE.FlatShading, side:THREE.DoubleSide});
-material.color.setHSL(1.0,0.5,0.5);
-material.specular.setHSL(0.5,1.0,0.1);
-material.shininess = 30; 
-var hue = Math.random();
-var specHue = Math.random();
-
-var material2 = new THREE.MeshPhongMaterial({color:0x993300, specular:0xffff00, shading:THREE.FlatShading, side:THREE.DoubleSide});
-material2.color.setHSL(1.0,0.5,0.5);
-material2.specular.setHSL(0.5,1.0,0.1);
-material2.shininess = 30; 
-var hue2 = Math.random();
-var specHue2 = Math.random();
-
-
-var cube = new THREE.Mesh(torusGeo, material2);
-cube.rotation.x = Math.random();
-cube.rotation.y = Math.random();
-cube.rotation.z = Math.random();
-bufferScene.add(cube);
-
-var cube2 = new THREE.Mesh(torusGeo, material);
-cube2.rotation.x = Math.random();
-cube2.rotation.y = Math.random();
-cube2.rotation.z = Math.random();
-bufferScene.add(cube2);
+var shape2 = new TorusKnotShape();
+bufferScene.add(shape2.mesh);
 
 
 var ambientLight = new THREE.AmbientLight(0x404040);
@@ -314,56 +276,6 @@ var numAxesControl = gui.add(this, "numAxes", [4, 6, 8, 12, 16, 18, 20, 24, 28, 
 var textureControl = gui.add(this, "showTexture");
 gui.add(this, "speed", 0, 2);
 
-// var torus = {radius:1, tubeSize:0.5, tubularSegments:50, radialSegments:30, p:4, q:16};
-
-var torusControl = gui.addFolder("Torus Control");
-torusControl.add(bufferCamera.position, "z", 0, 50);
-var radiusControl = torusControl.add(torus, "radius", 1, 20);
-var tubeSizeControl = torusControl.add(torus, "tubeSize", 0.1, 10);
-var tubularSegmentControl = torusControl.add(torus, "tubularSegments", 3, 100).step(1);
-var radialSegmentControl = torusControl.add(torus, "radialSegments", 3, 50).step(1);
-var pControl = torusControl.add(torus, "p", 1, 20).step(1);
-var qControl = torusControl.add(torus, "q", 1, 20).step(1);
-torusControl.open();
-
-numAxesControl.onChange(function(value){
-	updateGridGeometry();
-});
-
-textureControl.onChange(function(value){
-	planeObj.visible = showTexture;
-});
-
-radiusControl.onChange(function(value){
-	updateTorus();
-});
-
-tubeSizeControl.onChange(function(value){
-	updateTorus();
-});
-
-tubularSegmentControl.onChange(function(value){
-	updateTorus();
-});
-
-radialSegmentControl.onChange(function(value){
-	updateTorus();
-});
-
-pControl.onChange(function(value){
-	updateTorus();
-});
-
-qControl.onChange(function(value){
-	updateTorus();
-});
-
-function updateTorus()
-{
-	updateTorusGeo();
-	cube.geometry = torusGeo;
-	cube2.geometry = torusGeo;
-}
 
 
 
@@ -387,28 +299,7 @@ function update()
 {
 	controls.update();
 
-	cube.rotation.x += 0.0045 * speed;
-	cube.rotation.y += 0.0021 * speed;
-	cube.rotation.z -= 0.0016 * speed;
-
-	cube2.rotation.x -= 0.0031 * speed;
-	cube2.rotation.y -= 0.0027 * speed;
-	cube2.rotation.z += 0.0009 * speed;
-
-	hue += 0.0005;
-	if (hue > 1.0) hue = 0.0;
-	material.color.setHSL(hue, 0.5, 0.3);
-
-	specHue += 0.0008;
-	if (specHue > 1.0) specHue = 0.0;
-	material.specular.setHSL(specHue, 1.0, 0.5);
-
-	hue2 += 0.0003;
-	if (hue2 > 1.0) hue2 = 0.0;
-	material2.color.setHSL(hue2, 0.5, 0.3);
-
-	specHue2 += 0.0001;
-	if (specHue2 > 1.0) specHue2 = 0.0;
-	material2.specular.setHSL(specHue2, 1.0, 0.5);
+	shape1.update();
+	shape2.update();
 
 }
