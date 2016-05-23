@@ -1,3 +1,4 @@
+// new comment
 
 
 var stats = new Stats();
@@ -5,7 +6,7 @@ stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 // document.body.appendChild( stats.dom );
 
 
-var bufferSize = 2048;
+var bufferSize = 1024;
 var bufferWidth = bufferSize;
 var bufferHeight = bufferSize;
 
@@ -13,7 +14,7 @@ var bufferHeight = bufferSize;
 var scene = new THREE.Scene();
 
 var bufferCamera = new THREE.PerspectiveCamera(75, bufferWidth / bufferHeight, 0.1, 1000);
-bufferCamera.position.z = 2;
+bufferCamera.position.z = 2.3;
 var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 );
 camera.position.z = 5;
 
@@ -30,8 +31,8 @@ var controls2 = new THREE.OrbitControls(camera, renderer.domElement);
 controls2.enableZoom = true;
 controls2.enableRotate = false;
 controls2.zoomSpeed = 0.3;
-controls2.minZoom = 0.1
-controls2.maxZoom = 10;
+controls2.minZoom = 0.2;
+controls2.maxZoom = 2;
 controls2.enablePan = false;
 
 
@@ -43,40 +44,26 @@ var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { mi
 
 var numAxes = 12;
 
-// var geometry = new THREE.IcosahedronGeometry(3, 2);
-var geometry = new THREE.TorusKnotGeometry( 1, 0.5, 50, 20, 4, 16 );
-var material = new THREE.MeshPhongMaterial({color:0x993300, specular:0xffff00, shading:THREE.FlatShading, side:THREE.DoubleSide});
-material.color.setHSL(1.0,0.5,0.5);
-material.specular.setHSL(0.5,1.0,0.1);
-material.shininess = 30; 
-var hue = Math.random();
-var specHue = Math.random();
+var allShapes = [];
+var numShapes = 2;
 
-var material2 = new THREE.MeshPhongMaterial({color:0x993300, specular:0xffff00, shading:THREE.FlatShading, side:THREE.DoubleSide});
-material2.color.setHSL(1.0,0.5,0.5);
-material2.specular.setHSL(0.5,1.0,0.1);
-material2.shininess = 30; 
-var hue2 = Math.random();
-var specHue2 = Math.random();
-
-var cube = new THREE.Mesh(geometry, material2);
-cube.rotation.x = Math.random();
-cube.rotation.y = Math.random();
-cube.rotation.z = Math.random();
-bufferScene.add(cube);
-
-var cube2 = new THREE.Mesh(geometry, material);
-cube2.rotation.x = Math.random();
-cube2.rotation.y = Math.random();
-cube2.rotation.z = Math.random();
-bufferScene.add(cube2);
+for (var i=0; i<numShapes; i++)
+{
+	var shape = new TorusKnotShape();
+	bufferScene.add(shape.mesh);
+	allShapes[i] = shape;
+}
 
 
 var ambientLight = new THREE.AmbientLight(0x404040);
 bufferScene.add(ambientLight);
 
-var pointLight = new THREE.PointLight(0xffffff);
-pointLight.position.set(0,50,100);
+var pointLight = new THREE.PointLight(0xaaaaaa);
+pointLight.position.set(0,50,200);
+bufferScene.add(pointLight);
+
+var pointLight = new THREE.PointLight(0x404040);
+pointLight.position.set(0,50,-200);
 bufferScene.add(pointLight);
 
 
@@ -88,7 +75,6 @@ scene.add(ambientLight);
 var pointLight3 = new THREE.PointLight(0xffffff);
 pointLight3.position.set(-100,200,100);
 scene.add(pointLight3);
-
 
 
 
@@ -113,7 +99,7 @@ function updateGridGeometry()
 	var tileGeometry = new THREE.Geometry();
 	tileGeometry.vertices.push(new THREE.Vector3(0,0,0));
 
-	var snapStep;
+	var snapStep; // number of steps between simplified shape vertices
 	var stepAngle;
 	var rotOffset;
 
@@ -204,22 +190,27 @@ function updateGridGeometry()
 	// set UV mapping
 	tileGeometry.faceVertexUvs[0] = [];
 
+	var mapWidth = 1/snapStep;
+	var diff = 1 - mapWidth;
+	var mapLeft = diff/2;
+	var mapRight = 1 - diff/2;
+
 	for (i = 0; i < tileGeometry.faces.length ; i++) 
 	{
 		if (i%2)
 		{
 			tileGeometry.faceVertexUvs[0].push([
 				new THREE.Vector2( 0.5,  0),
-				new THREE.Vector2( 0, 1),
-				new THREE.Vector2(  1, 1)
+				new THREE.Vector2( mapLeft, 1),
+				new THREE.Vector2(  mapRight, 1)
 			]);
 		}
 		else
 		{
 			tileGeometry.faceVertexUvs[0].push([
 				new THREE.Vector2( 0.5,  0),
-				new THREE.Vector2( 1, 1),
-				new THREE.Vector2(  0, 1)
+				new THREE.Vector2( mapRight, 1),
+				new THREE.Vector2(  mapLeft, 1)
 			]);
 		}	
 	}
@@ -230,7 +221,7 @@ function updateGridGeometry()
 	var tileRow = new THREE.Object3D();
 	tileHolder.add(tileRow);
 
-	var scale = bufferSize/4;
+	var scale = bufferSize/3;
 
 	var tileMesh = new THREE.Mesh(tileGeometry, tileMat);
 	tileMesh.scale.set( scale, scale, 1 );
@@ -271,21 +262,31 @@ function updateGridGeometry()
 updateGridGeometry();
 
 
+// test plane
+var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
+var planeGeo = new THREE.PlaneGeometry(bufferWidth/2, bufferHeight/2);
+var planeObj = new THREE.Mesh(planeGeo, planeMat);
+scene.add(planeObj);
+planeObj.visible = false;
+
+
 // GUI
+
+var showTexture = false;
+var speed = 1.0;
 
 var gui = new dat.GUI();
 var numAxesControl = gui.add(this, "numAxes", [4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36]);
+var textureControl = gui.add(this, "showTexture");
+gui.add(this, "speed", 0, 2);
 
 numAxesControl.onChange(function(value){
-	console.log("numAxes changed");
 	updateGridGeometry();
 });
 
-// test plane
-// var planeMat = new THREE.MeshBasicMaterial({map:bufferTexture, side:THREE.DoubleSide});
-// var planeGeo = new THREE.PlaneGeometry(bufferWidth, bufferHeight);
-// var planeObj = new THREE.Mesh(planeGeo, planeMat);
-// scene.add(planeObj);
+textureControl.onChange(function(value){
+	planeObj.visible = showTexture;
+});
 
 
 function render()
@@ -308,29 +309,8 @@ function update()
 {
 	controls.update();
 
-	var speed = -0.2;
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].update();
+	}
 
-	cube.rotation.x += 0.0045 * speed;
-	cube.rotation.y += 0.0021 * speed;
-	cube.rotation.z -= 0.0016 * speed;
-
-	cube2.rotation.x -= 0.0031 * speed;
-	cube2.rotation.y -= 0.0027 * speed;
-	cube2.rotation.z += 0.0009 * speed;
-
-	hue += 0.0005;
-	if (hue > 1.0) hue = 0.0;
-	material.color.setHSL(hue, 0.5, 0.3);
-
-	specHue += 0.0008;
-	if (specHue > 1.0) specHue = 0.0;
-	material.specular.setHSL(specHue, 1.0, 0.5);
-
-	hue2 += 0.0003;
-	if (hue2 > 1.0) hue2 = 0.0;
-	material2.color.setHSL(hue2, 0.5, 0.3);
-
-	specHue2 += 0.0001;
-	if (specHue2 > 1.0) specHue2 = 0.0;
-	material2.specular.setHSL(specHue2, 1.0, 0.5);
 }
