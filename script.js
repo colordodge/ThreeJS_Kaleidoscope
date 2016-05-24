@@ -10,11 +10,19 @@ var bufferSize = 1024;
 var bufferWidth = bufferSize;
 var bufferHeight = bufferSize;
 
+var showTexture = false;
+var speed = 0.5;
+var saturation = 1.0;
+var lightness = 1.0;
+var isPaused = false;
+var shapeZoom = 2.2;
+
 
 var scene = new THREE.Scene();
 
 var bufferCamera = new THREE.PerspectiveCamera(75, bufferWidth / bufferHeight, 0.1, 1000);
-bufferCamera.position.z = 2.3;
+bufferCamera.position.z = shapeZoom;
+
 var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 1000 );
 camera.position.z = 5;
 
@@ -45,17 +53,29 @@ var bufferTexture = new THREE.WebGLRenderTarget( bufferWidth, bufferHeight, { mi
 var numAxes = 12;
 
 var allShapes = [];
-var numShapes = 2;
+var numShapes = 10;
+var complexity = 5;
 
-for (var i=0; i<numShapes; i++)
+function createShapes()
 {
-	var shape = new TorusKnotShape();
-	bufferScene.add(shape.mesh);
-	allShapes[i] = shape;
+	for (var i=0; i<numShapes; i++)
+	{
+		var shape = new TorusKnotShape();
+		shape.update();
+		bufferScene.add(shape.mesh);
+		allShapes[i] = shape;
+
+		if (i < complexity) {
+			shape.mesh.visible = true;
+		} else {
+			shape.mesh.visible = false;
+		}
+	}	
 }
+createShapes();
 
 
-var ambientLight = new THREE.AmbientLight(0x404040);
+var ambientLight = new THREE.AmbientLight(0x808080);
 bufferScene.add(ambientLight);
 
 var pointLight = new THREE.PointLight(0xaaaaaa);
@@ -272,13 +292,24 @@ planeObj.visible = false;
 
 // GUI
 
-var showTexture = false;
-var speed = 1.0;
+
 
 var gui = new dat.GUI();
+gui.add(this, "speed", 0, 2);
+var complexityControl = gui.add(this, "complexity", 1, 10).step(1);
+var shapeZoomControl = gui.add(this, "shapeZoom", 1, 3);
+var saturationControl = gui.add(this, "saturation", 0, 3);
+var lightnessControl = gui.add(this, "lightness", 0, 3);
 var numAxesControl = gui.add(this, "numAxes", [4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36]);
 var textureControl = gui.add(this, "showTexture");
-gui.add(this, "speed", 0, 2);
+gui.add(this, "isPaused").listen();
+gui.add(this, "randomize");
+gui.add(this, "randomizeColor");
+
+
+shapeZoomControl.onChange(function(value){
+	bufferCamera.position.z = shapeZoom;
+});
 
 numAxesControl.onChange(function(value){
 	updateGridGeometry();
@@ -288,12 +319,53 @@ textureControl.onChange(function(value){
 	planeObj.visible = showTexture;
 });
 
+complexityControl.onChange(function(value)
+{
+	for (var i=0; i<numShapes; i++) 
+	{
+		if (i < complexity) {
+			allShapes[i].mesh.visible = true;
+		} else {
+			allShapes[i].mesh.visible = false;
+		}
+	}
+});
+
+saturationControl.onChange(function(value)
+{
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].updateColor();
+	}
+});
+
+lightnessControl.onChange(function(value)
+{
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].updateColor();
+	}
+});
+
+function randomize()
+{
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].update();
+		bufferScene.remove(allShapes[i].mesh);
+	}
+	createShapes();
+}
+
+function randomizeColor()
+{
+	for (var i=0; i<numShapes; i++) {
+		allShapes[i].randomizeColor();
+	}
+}
+
 
 function render()
 {
 	stats.begin();
 
-	
 	update();
 	
 	renderer.render(bufferScene, bufferCamera, bufferTexture);
@@ -309,8 +381,34 @@ function update()
 {
 	controls.update();
 
-	for (var i=0; i<numShapes; i++) {
-		allShapes[i].update();
+	if (!isPaused)
+	{
+		for (var i=0; i<complexity; i++) {
+			allShapes[i].update();
+		}
 	}
-
 }
+
+window.addEventListener('resize', function() 
+{
+	var WIDTH = window.innerWidth;
+	var HEIGHT = window.innerHeight;
+	renderer.setSize(WIDTH, HEIGHT);
+
+	camera.left = window.innerWidth / - 2;
+	camera.right = window.innerWidth / 2;
+	camera.top = window.innerHeight / 2;
+	camera.bottom = window.innerHeight / - 2;
+	camera.updateProjectionMatrix();
+});
+
+window.addEventListener('keydown', function(e){
+	e = e || window.event;
+
+    if (e.keyCode == '32')  {
+    	isPaused = !isPaused;
+    }
+});
+
+
+
