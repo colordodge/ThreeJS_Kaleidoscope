@@ -8,6 +8,7 @@ function TorusKnotShape()
 	this.hue = Math.random();
 	this.specHue = Math.random();
 	this.sat = Math.random();
+	this.sat2 = Math.random();
 
 	var hueSpeed = (Math.random() * 10) / 10000;
 	var specHueSpeed = (Math.random() * 10) / 10000;
@@ -65,7 +66,7 @@ function TorusKnotShape()
 
 		this.specHue -= specHueSpeed * speed;
 		if (this.specHue < 0.0) this.specHue = 1.0;
-		material.specular.setHSL(this.specHue, 1.0*saturation * this.sat*2, 0.5*lightness);
+		material.specular.setHSL(this.specHue, 1.0*saturation * this.sat2 * 2, 0.5*lightness);
 	}
 
 	this.randomizeColor = function()
@@ -73,6 +74,7 @@ function TorusKnotShape()
 		this.hue = Math.random();
 		this.specHue = Math.random();
 		this.sat = Math.random();
+		this.sat2 = Math.random();
 
 		this.updateColor();
 	}
